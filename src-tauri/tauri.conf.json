@@ -1,57 +1,61 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Fuji Studio",
-  "version": "0.1.0",
-  "identifier": "io.fujistudio.desktop",
-  "build": {
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:1420",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
-  },
-  "app": {
-    "windows": [
-      {
-        "title": "Fuji Studio",
-        "width": 1100,
-        "height": 720,
-        "minWidth": 800,
-        "minHeight": 560,
-        "resizable": true,
-        "fullscreen": false,
-        "decorations": true
-      }
-    ],
-    "security": {
-      "csp": null
-    },
-    "trayIcon": {
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": false,
-      "menuOnLeftClick": false,
-      "tooltip": "Fuji Studio"
-    }
-  },
-  "bundle": {
-    "active": true,
-    "targets": ["nsis", "msi"],
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.ico"
-    ],
-    "publisher": "Fuji Studio",
-    "category": "Productivity",
-    "shortDescription": "FL Studio project syncing",
-    "longDescription": "Automatic FL Studio project syncing for Fuji Studio. Watches your project folders and syncs changes to your fujistud.io account."
-  },
-  "plugins": {
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZBMUE0MkM2QzM2OTM4QzAKUldUQU9HbkR4a0lhYXJxc0hoNUhHaWpIZTZYODNzNTBzZFAzeDBmV0N0S0phOERqN1lhbk8vWFIK",
-      "endpoints": [
-        "https://fujistud.io/api/desktop/update"
-      ]
-    }
-  }
+    "$schema":  "https://schema.tauri.app/config/2",
+    "productName":  "Fuji Studio",
+    "version":  "0.1.0",
+    "identifier":  "io.fujistudio.desktop",
+    "build":  {
+                  "frontendDist":  "../dist",
+                  "devUrl":  "http://localhost:1420",
+                  "beforeDevCommand":  "npm run dev",
+                  "beforeBuildCommand":  "npm run build"
+              },
+    "app":  {
+                "windows":  [
+                                {
+                                    "title":  "Fuji Studio",
+                                    "width":  1100,
+                                    "height":  720,
+                                    "minWidth":  800,
+                                    "minHeight":  560,
+                                    "resizable":  true,
+                                    "fullscreen":  false,
+                                    "decorations":  true
+                                }
+                            ],
+                "security":  {
+                                 "csp":  null
+                             },
+                "trayIcon":  {
+                                 "iconPath":  "icons/icon.png",
+                                 "iconAsTemplate":  false,
+                                 "menuOnLeftClick":  false,
+                                 "tooltip":  "Fuji Studio"
+                             }
+            },
+    "bundle":  {
+                   "active":  true,
+                   "targets":  [
+                                   "nsis",
+                                   "msi"
+                               ],
+                   "createUpdaterArtifacts":  true,
+                   "icon":  [
+                                "icons/32x32.png",
+                                "icons/128x128.png",
+                                "icons/128x128@2x.png",
+                                "icons/icon.ico"
+                            ],
+                   "publisher":  "Fuji Studio",
+                   "category":  "Productivity",
+                   "shortDescription":  "FL Studio project syncing",
+                   "longDescription":  "Automatic FL Studio project syncing for Fuji Studio. Watches your project folders and syncs changes to your fujistud.io account."
+               },
+    "plugins":  {
+                    "updater":  {
+                                    "pubkey":  "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZBMUE0MkM2QzM2OTM4QzAKUldUQU9HbkR4a0lhYXJxc0hoNUhHaWpIZTZYODNzNTBzZFAzeDBmV0N0S0phOERqN1lhbk8vWFIK",
+                                    "endpoints":  [
+                                                      "https://fujistud.io/api/desktop/update"
+                                                  ]
+                                }
+                }
 }
