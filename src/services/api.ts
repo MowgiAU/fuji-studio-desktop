@@ -69,6 +69,9 @@ export const getToken = () =>
 export const clearToken = () =>
   invoke<void>('clear_token');
 
+export const revokeToken = () =>
+  invoke<void>('revoke_token');
+
 export const setApiBase = (base: string) =>
   invoke<void>('set_api_base', { base });
 

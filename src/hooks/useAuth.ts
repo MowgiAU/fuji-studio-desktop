@@ -30,7 +30,7 @@ export function useAuth() {
   }, []);
 
   const signOut = useCallback(async () => {
-    await api.clearToken();
+    await api.revokeToken().catch(() => api.clearToken());
     await Persist.setToken(null);
     setState({ token: null, loading: false });
   }, []);
