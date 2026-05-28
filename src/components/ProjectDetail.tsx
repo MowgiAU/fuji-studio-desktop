@@ -7,7 +7,7 @@ import { Persist, PersistedWatch } from '../services/store';
 import { useSyncProgress } from '../hooks/useSync';
 import {
   ChevronLeft, ChevronDown, ChevronUp, ExternalLink, FileAudio, FolderPlus,
-  HardDrive, RefreshCw, X, Link, LinkOff, Music, Check, AlertCircle,
+  HardDrive, RefreshCw, X, Link, Link2Off, Music, Check, AlertCircle,
 } from 'lucide-react';
 
 interface Props {
@@ -315,7 +315,7 @@ export const ProjectDetail: React.FC<Props> = ({ projectId, onBack }) => {
                             >
                               {unpublishLoading === publishedLink.trackId
                                 ? '…'
-                                : <><LinkOff size={12} /> Unpublish</>}
+                                : <><Link2Off size={12} /> Unpublish</>}
                             </button>
                           )}
                         </div>
