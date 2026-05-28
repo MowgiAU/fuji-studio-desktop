@@ -148,6 +148,25 @@ pub fn clear_token(state: State<'_, Mutex<AppState>>) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn revoke_token(state: State<'_, Mutex<AppState>>) -> Result<(), String> {
+    let token = {
+        let mut s = state.lock().map_err(|e| e.to_string())?;
+        let t = s.token.clone();
+        s.token = None;
+        t
+    };
+    if let Some(token) = token {
+        let base = api_base(&state);
+        let _ = reqwest::Client::new()
+            .post(format!("{}/api/oauth/device/revoke", base))
+            .header("Authorization", format!("Bearer {}", token))
+            .send()
+            .await;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub fn set_api_base(base: String, state: State<'_, Mutex<AppState>>) -> Result<(), String> {
     let trimmed = base.trim_end_matches('/').to_string();
     state

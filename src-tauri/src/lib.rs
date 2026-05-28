@@ -36,6 +36,7 @@ pub fn run() {
             auth::set_token,
             auth::get_token,
             auth::clear_token,
+            auth::revoke_token,
             auth::set_api_base,
             auth::get_api_base,
             // Sync commands
