@@ -133,7 +133,7 @@ struct CheckResponse {
     missing_hashes: Vec<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SyncArgs {
     #[serde(rename = "projectId")]
     pub project_id: String,
@@ -224,7 +224,14 @@ pub async fn sync_local_project(
     let check: CheckResponse = check_resp.json().await.map_err(|e| e.to_string())?;
     let missing: std::collections::HashSet<String> = check.missing_hashes.into_iter().collect();
 
-    let to_upload: Vec<&LocalFile> = files.iter().filter(|f| missing.contains(&f.hash)).collect();
+    // Clone into owned values so the upload closures don't borrow from `files`.
+    // Tauri commands require `'static` closures, which can't hold borrows of
+    // function-local data.
+    let to_upload: Vec<LocalFile> = files
+        .iter()
+        .filter(|f| missing.contains(&f.hash))
+        .cloned()
+        .collect();
     let total_uploads = to_upload.len();
 
     emit_progress(&app, SyncProgress {

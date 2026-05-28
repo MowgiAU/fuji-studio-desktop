@@ -6,7 +6,7 @@
 // AppState — dropping it stops the watcher.
 
 use crate::state::{AppState, WatchedFolder};
-use notify::{EventKind, RecursiveMode};
+use notify::{EventKind, RecursiveMode, Watcher};
 use notify_debouncer_full::new_debouncer;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -39,7 +39,7 @@ pub fn watch_project_folder(
     }
 
     {
-        let mut s = state.lock().map_err(|e| e.to_string())?;
+        let s = state.lock().map_err(|e| e.to_string())?;
         if s.watchers.contains_key(&project_id) {
             return Err("Already watching this project".to_string());
         }
