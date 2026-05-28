@@ -58,6 +58,91 @@ pub struct RemoteProject {
     pub updated_at: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TrackRef {
+    pub id: String,
+    pub title: String,
+    #[serde(default)]
+    pub slug: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VersionTrackLink {
+    #[serde(rename = "trackId")]
+    pub track_id: String,
+    pub track: TrackRef,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ProjectTrackLink {
+    #[serde(rename = "trackId")]
+    pub track_id: String,
+    #[serde(rename = "versionId")]
+    pub version_id: String,
+    pub track: TrackRef,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RemoteProjectVersion {
+    pub id: String,
+    #[serde(rename = "versionNumber")]
+    pub version_number: i32,
+    #[serde(default)]
+    pub message: Option<String>,
+    #[serde(rename = "totalFiles")]
+    pub total_files: i32,
+    #[serde(rename = "totalSize")]
+    pub total_size: i64,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+    #[serde(rename = "isParsed", default)]
+    pub is_parsed: bool,
+    #[serde(rename = "trackLinks", default)]
+    pub track_links: Vec<VersionTrackLink>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RemoteProjectDetail {
+    pub id: String,
+    pub name: String,
+    pub slug: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub versions: Vec<RemoteProjectVersion>,
+    #[serde(rename = "trackLinks", default)]
+    pub track_links: Vec<ProjectTrackLink>,
+    #[serde(rename = "updatedAt", default)]
+    pub updated_at: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MyTrack {
+    pub id: String,
+    pub title: String,
+    #[serde(rename = "coverUrl", default)]
+    pub cover_url: Option<String>,
+    #[serde(default)]
+    pub duration: Option<f64>,
+    #[serde(rename = "isPublic", default)]
+    pub is_public: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VersionDiff {
+    #[serde(rename = "versionNumber")]
+    pub version_number: i32,
+    #[serde(rename = "previousVersionNumber")]
+    pub previous_version_number: Option<i32>,
+    #[serde(rename = "totalFiles")]
+    pub total_files: i32,
+    pub added: Vec<String>,
+    pub changed: Vec<String>,
+    pub removed: Vec<String>,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+}
+
 #[tauri::command]
 pub async fn list_remote_projects(
     state: State<'_, Mutex<AppState>>,
@@ -104,6 +189,110 @@ pub async fn create_remote_project(
         return Err(format!("API error: {}", txt));
     }
     resp.json::<RemoteProject>().await.map_err(|e| e.to_string())
+}
+
+// ─── Project detail, tracks, publish ───────────────────────────────────
+
+#[tauri::command]
+pub async fn get_project_detail(
+    project_id: String,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<RemoteProjectDetail, String> {
+    let base = api_base(&state);
+    let auth = auth_header(&state)?;
+    let resp = http_client()
+        .get(format!("{}/api/projects/{}", base, project_id))
+        .header("Authorization", auth)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("API error: {}", resp.status()));
+    }
+    resp.json::<RemoteProjectDetail>().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn list_my_tracks(
+    state: State<'_, Mutex<AppState>>,
+) -> Result<Vec<MyTrack>, String> {
+    let base = api_base(&state);
+    let auth = auth_header(&state)?;
+    let resp = http_client()
+        .get(format!("{}/api/projects/my-tracks", base))
+        .header("Authorization", auth)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("API error: {}", resp.status()));
+    }
+    resp.json::<Vec<MyTrack>>().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_version_diff(
+    project_id: String,
+    version_id: String,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<VersionDiff, String> {
+    let base = api_base(&state);
+    let auth = auth_header(&state)?;
+    let resp = http_client()
+        .get(format!("{}/api/projects/{}/versions/{}/diff", base, project_id, version_id))
+        .header("Authorization", auth)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("API error: {}", resp.status()));
+    }
+    resp.json::<VersionDiff>().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn publish_version(
+    project_id: String,
+    version_id: String,
+    track_id: String,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<serde_json::Value, String> {
+    let base = api_base(&state);
+    let auth = auth_header(&state)?;
+    let resp = http_client()
+        .post(format!("{}/api/projects/{}/publish", base, project_id))
+        .header("Authorization", auth)
+        .json(&serde_json::json!({ "versionId": version_id, "trackId": track_id }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        let txt = resp.text().await.unwrap_or_default();
+        return Err(format!("Publish failed: {}", txt));
+    }
+    resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn unpublish_version(
+    project_id: String,
+    track_id: String,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<(), String> {
+    let base = api_base(&state);
+    let auth = auth_header(&state)?;
+    let resp = http_client()
+        .post(format!("{}/api/projects/{}/unpublish", base, project_id))
+        .header("Authorization", auth)
+        .json(&serde_json::json!({ "trackId": track_id }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        let txt = resp.text().await.unwrap_or_default();
+        return Err(format!("Unpublish failed: {}", txt));
+    }
+    Ok(())
 }
 
 // ─── Local scanning ─────────────────────────────────────────────────────

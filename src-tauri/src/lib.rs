@@ -42,6 +42,11 @@ pub fn run() {
             // Sync commands
             sync::list_remote_projects,
             sync::create_remote_project,
+            sync::get_project_detail,
+            sync::list_my_tracks,
+            sync::get_version_diff,
+            sync::publish_version,
+            sync::unpublish_version,
             sync::sync_local_project,
             sync::scan_local_folder,
             // Watcher commands

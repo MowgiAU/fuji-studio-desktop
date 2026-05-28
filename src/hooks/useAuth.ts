@@ -20,6 +20,14 @@ export function useAuth() {
         }
         if (storedToken) {
           await api.setToken(storedToken);
+          // Re-register file watchers so auto-sync is active immediately on startup,
+          // not waiting for the ProjectList component to mount.
+          const watches = await Persist.getWatches();
+          for (const w of watches) {
+            if (w.autoSync) {
+              await api.watchProjectFolder(w.projectId, w.folderPath).catch(() => {});
+            }
+          }
         }
         setState({ token: storedToken, loading: false });
       } catch (e) {

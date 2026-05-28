@@ -27,6 +27,57 @@ export interface RemoteProject {
   updatedAt?: string | null;
 }
 
+export interface TrackRef {
+  id: string;
+  title: string;
+  slug?: string | null;
+}
+
+export interface VersionTrackLink {
+  trackId: string;
+  track: TrackRef;
+}
+
+export interface ProjectTrackLink {
+  trackId: string;
+  versionId: string;
+  track: TrackRef;
+}
+
+export interface RemoteProjectVersion {
+  id: string;
+  versionNumber: number;
+  message?: string | null;
+  totalFiles: number;
+  totalSize: number;
+  createdAt: string;
+  isParsed: boolean;
+  trackLinks: VersionTrackLink[];
+}
+
+export interface RemoteProjectDetail extends RemoteProject {
+  versions: RemoteProjectVersion[];
+  trackLinks: ProjectTrackLink[];
+}
+
+export interface MyTrack {
+  id: string;
+  title: string;
+  coverUrl?: string | null;
+  duration?: number | null;
+  isPublic: boolean;
+}
+
+export interface VersionDiff {
+  versionNumber: number;
+  previousVersionNumber: number | null;
+  totalFiles: number;
+  added: string[];
+  changed: string[];
+  removed: string[];
+  createdAt: string;
+}
+
 export interface LocalFile {
   path: string;
   hash: string;
@@ -85,6 +136,21 @@ export const listRemoteProjects = () =>
 
 export const createRemoteProject = (name: string, description?: string) =>
   invoke<RemoteProject>('create_remote_project', { args: { name, description } });
+
+export const getProjectDetail = (projectId: string) =>
+  invoke<RemoteProjectDetail>('get_project_detail', { projectId });
+
+export const listMyTracks = () =>
+  invoke<MyTrack[]>('list_my_tracks');
+
+export const getVersionDiff = (projectId: string, versionId: string) =>
+  invoke<VersionDiff>('get_version_diff', { projectId, versionId });
+
+export const publishVersion = (projectId: string, versionId: string, trackId: string) =>
+  invoke<unknown>('publish_version', { projectId, versionId, trackId });
+
+export const unpublishVersion = (projectId: string, trackId: string) =>
+  invoke<void>('unpublish_version', { projectId, trackId });
 
 // ─── Sync ─────────────────────────────────────────────────────────────
 
