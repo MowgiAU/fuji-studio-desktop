@@ -59,6 +59,39 @@ pub struct RemoteProject {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DesktopMe {
+    #[serde(rename = "userId")]
+    pub user_id: String,
+    pub username: String,
+    #[serde(rename = "displayName", default)]
+    pub display_name: Option<String>,
+    #[serde(default)]
+    pub avatar: Option<String>,
+    #[serde(rename = "projectCount")]
+    pub project_count: i32,
+    #[serde(rename = "totalStorageBytes")]
+    pub total_storage_bytes: i64,
+}
+
+#[tauri::command]
+pub async fn get_desktop_me(
+    state: State<'_, Mutex<AppState>>,
+) -> Result<DesktopMe, String> {
+    let base = api_base(&state);
+    let auth = auth_header(&state)?;
+    let resp = http_client()
+        .get(format!("{}/api/projects/desktop/me", base))
+        .header("Authorization", auth)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("API error: {}", resp.status()));
+    }
+    resp.json::<DesktopMe>().await.map_err(|e| e.to_string())
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TrackRef {
     pub id: String,
     pub title: String,

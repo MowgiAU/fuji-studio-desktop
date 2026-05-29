@@ -131,6 +131,18 @@ export const getApiBase = () =>
 
 // ─── Projects ─────────────────────────────────────────────────────────
 
+export interface DesktopMe {
+  userId: string;
+  username: string;
+  displayName: string | null;
+  avatar: string | null;
+  projectCount: number;
+  totalStorageBytes: number;
+}
+
+export const getDesktopMe = () =>
+  invoke<DesktopMe>('get_desktop_me');
+
 export const listRemoteProjects = () =>
   invoke<RemoteProject[]>('list_remote_projects');
 
@@ -165,6 +177,20 @@ export const syncLocalProject = (
   invoke<unknown>('sync_local_project', {
     args: { projectId, folderPath, message },
   });
+
+// ─── Updater ──────────────────────────────────────────────────────────
+
+export interface UpdateInfo {
+  available: boolean;
+  version?: string | null;
+  body?: string | null;
+}
+
+export const checkForUpdate = () =>
+  invoke<UpdateInfo>('check_for_update');
+
+export const installUpdate = () =>
+  invoke<void>('install_update');
 
 // ─── Watcher ──────────────────────────────────────────────────────────
 

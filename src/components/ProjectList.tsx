@@ -10,9 +10,10 @@ import {
 
 interface Props {
   onOpenProject: (projectId: string) => void;
+  showSyncOnly?: boolean;
 }
 
-export const ProjectList: React.FC<Props> = ({ onOpenProject }) => {
+export const ProjectList: React.FC<Props> = ({ onOpenProject, showSyncOnly }) => {
   const [projects, setProjects] = useState<api.RemoteProject[]>([]);
   const [watches, setWatches] = useState<PersistedWatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,6 +139,13 @@ export const ProjectList: React.FC<Props> = ({ onOpenProject }) => {
     }
   };
 
+  const visibleProjects = showSyncOnly
+    ? projects.filter(p => {
+        const prog = progress[p.id];
+        return prog && prog.stage !== 'done' && prog.stage !== 'error';
+      })
+    : projects;
+
   return (
     <div style={{ padding: spacing.xxl, maxWidth: 900, margin: '0 auto' }}>
       <div
@@ -151,10 +159,12 @@ export const ProjectList: React.FC<Props> = ({ onOpenProject }) => {
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
             <FolderOpen size={22} color={colors.primary} style={{ verticalAlign: 'middle', marginRight: 10 }} />
-            Projects
+            {showSyncOnly ? 'Sync Progress' : 'Projects'}
           </h1>
           <p style={{ margin: '4px 0 0', color: colors.textSecondary, fontSize: 12 }}>
-            Sync FL Studio projects to your fujistud.io account
+            {showSyncOnly
+              ? 'Projects currently syncing'
+              : 'Sync FL Studio projects to your fujistud.io account'}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -177,24 +187,26 @@ export const ProjectList: React.FC<Props> = ({ onOpenProject }) => {
             <RefreshCw size={14} style={loading ? { animation: 'spin 1s linear infinite' } : undefined} />
             Refresh
           </button>
-          <button
-            onClick={() => setShowCreate(true)}
-            style={{
-              background: colors.primary,
-              color: '#fff',
-              border: 'none',
-              padding: '8px 14px',
-              borderRadius: borderRadius.md,
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <Plus size={14} /> New Project
-          </button>
+          {!showSyncOnly && (
+            <button
+              onClick={() => setShowCreate(true)}
+              style={{
+                background: colors.primary,
+                color: '#fff',
+                border: 'none',
+                padding: '8px 14px',
+                borderRadius: borderRadius.md,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Plus size={14} /> New Project
+            </button>
+          )}
         </div>
       </div>
 
@@ -276,17 +288,19 @@ export const ProjectList: React.FC<Props> = ({ onOpenProject }) => {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60, color: colors.textTertiary }}>Loading…</div>
-      ) : projects.length === 0 ? (
+      ) : visibleProjects.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 60, color: colors.textSecondary }}>
           <FolderOpen size={36} style={{ marginBottom: 12, opacity: 0.3 }} />
-          <p style={{ margin: 0 }}>No projects yet</p>
+          <p style={{ margin: 0 }}>{showSyncOnly ? 'No active syncs' : 'No projects yet'}</p>
           <p style={{ fontSize: 12, color: colors.textTertiary }}>
-            Create a project and link it to a folder on your computer
+            {showSyncOnly
+              ? 'Start a sync from the Projects page'
+              : 'Create a project and link it to a folder on your computer'}
           </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {projects.map(project => {
+          {visibleProjects.map(project => {
             const watch = watches.find(w => w.projectId === project.id);
             const prog = progress[project.id];
             return (
