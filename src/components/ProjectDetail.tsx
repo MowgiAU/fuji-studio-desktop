@@ -485,7 +485,7 @@ export const ProjectDetail: React.FC<Props> = ({ projectId, onBack, username }) 
                           ) : (
                             <>
                               <button
-                                onClick={() => window.electronAPI.openExternal(`${apiBase}/profile/${username}/track/${publishedLink.track.slug}`).catch(() => {})}
+                                onClick={() => window.electronAPI.openExternal(`${apiBase}/profile/${username}/${publishedLink.track.slug}`).catch(() => {})}
                                 style={{ ...ghostBtn, color: colors.primary }}
                               >
                                 <ExternalLink size={11} /> View track
