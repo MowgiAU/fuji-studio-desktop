@@ -455,11 +455,16 @@ ipcMain.handle('install_update', async () => {
 
 // ─── IPC: Watcher ─────────────────────────────────────────────────────────────
 
-ipcMain.handle('watch_project_folder', (_, projectId: string, folderPath: string) => {
+ipcMain.handle('watch_project_folder', async (_, projectId: string, folderPath: string) => {
   if (!fs.existsSync(folderPath) || !fs.statSync(folderPath).isDirectory()) {
     throw new Error(`Not a directory: ${folderPath}`);
   }
-  if (state.watchers.has(projectId)) throw new Error('Already watching this project');
+  const existing = state.watchers.get(projectId);
+  if (existing) {
+    if (existing.folderPath === folderPath) return;
+    await existing.watcher.close();
+    state.watchers.delete(projectId);
+  }
 
   const pendingPaths = new Set<string>();
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
