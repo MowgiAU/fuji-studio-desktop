@@ -288,6 +288,7 @@ export const ProjectDetail: React.FC<Props> = ({ projectId, onBack, username }) 
         allowProjectDownload: createAllowProject,
         license: createLicense,
         genreIds: createGenreIds.length > 0 ? createGenreIds : undefined,
+        flpFolderPath: watch?.folderPath,
       });
 
       setCreatePhase('linking');

@@ -322,9 +322,23 @@ ipcMain.handle('upload_track', async (_, payload: {
   trackType?: string; artist?: string; album?: string; year?: string;
   allowAudioDownload?: boolean; allowProjectDownload?: boolean;
   license?: string; genreIds?: string[];
+  flpFolderPath?: string;
 }) => {
   const form = new FormData();
   form.append('audio', new Blob([payload.audioBuffer], { type: payload.audioMime }), payload.audioName);
+
+  // Find and attach .flp from local project folder so the server can parse the arrangement
+  if (payload.flpFolderPath && fs.existsSync(payload.flpFolderPath)) {
+    try {
+      const allFiles = fs.readdirSync(payload.flpFolderPath, { recursive: true, encoding: 'utf-8' }) as string[];
+      const relFlp = allFiles.find(f => f.toLowerCase().endsWith('.flp'));
+      if (relFlp) {
+        const flpPath = path.join(payload.flpFolderPath, relFlp);
+        const flpBuffer = fs.readFileSync(flpPath);
+        form.append('project', new Blob([flpBuffer], { type: 'application/octet-stream' }), path.basename(flpPath));
+      }
+    } catch {}
+  }
   form.append('title', payload.title);
   form.append('isPublic', payload.isPublic ? 'true' : 'false');
   if (payload.artworkBuffer && payload.artworkName) {

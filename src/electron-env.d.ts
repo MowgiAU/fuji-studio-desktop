@@ -86,6 +86,7 @@ declare global {
         trackType?: string; artist?: string; album?: string; year?: string;
         allowAudioDownload?: boolean; allowProjectDownload?: boolean;
         license?: string; genreIds?: string[];
+        flpFolderPath?: string;
       }): Promise<{ id: string; title: string; slug: string }>;
       getVersionDiff(projectId: string, versionId: string): Promise<unknown>;
       publishVersion(projectId: string, versionId: string, trackId: string): Promise<unknown>;
