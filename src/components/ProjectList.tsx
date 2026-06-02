@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { borderRadius, colors, spacing } from '../theme/theme';
 import * as api from '../services/api';
 import { Persist, PersistedWatch } from '../services/store';
@@ -11,9 +10,10 @@ import {
 interface Props {
   onOpenProject: (projectId: string) => void;
   showSyncOnly?: boolean;
+  searchQuery?: string;
 }
 
-export const ProjectList: React.FC<Props> = ({ onOpenProject, showSyncOnly }) => {
+export const ProjectList: React.FC<Props> = ({ onOpenProject, showSyncOnly, searchQuery }) => {
   const [projects, setProjects] = useState<api.RemoteProject[]>([]);
   const [watches, setWatches] = useState<PersistedWatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +99,7 @@ export const ProjectList: React.FC<Props> = ({ onOpenProject, showSyncOnly }) =>
 
   const pickFolderAndLink = async (projectId: string) => {
     try {
-      const selected = await openDialog({ directory: true, multiple: false });
+      const selected = await window.electronAPI.selectFolder();
       if (!selected || typeof selected !== 'string') return;
       const watch: PersistedWatch = {
         projectId,
@@ -139,12 +139,16 @@ export const ProjectList: React.FC<Props> = ({ onOpenProject, showSyncOnly }) =>
     }
   };
 
-  const visibleProjects = showSyncOnly
-    ? projects.filter(p => {
+  const q = searchQuery?.trim().toLowerCase() ?? '';
+  const visibleProjects = projects
+    .filter(p => {
+      if (showSyncOnly) {
         const prog = progress[p.id];
         return prog && prog.stage !== 'done' && prog.stage !== 'error';
-      })
-    : projects;
+      }
+      return true;
+    })
+    .filter(p => !q || p.name.toLowerCase().includes(q));
 
   return (
     <div style={{ padding: spacing.xxl, maxWidth: 900, margin: '0 auto' }}>

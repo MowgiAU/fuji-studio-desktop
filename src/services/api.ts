@@ -1,9 +1,5 @@
-// Thin wrappers around the Rust-side Tauri commands.
-//
-// All HTTP traffic happens in Rust (`src-tauri/src/sync.rs` etc.) so this
-// module exposes a typed surface for the React UI.
-
-import { invoke } from '@tauri-apps/api/core';
+// Typed wrappers around the Electron main process IPC commands.
+// All actual HTTP traffic and file I/O happens in electron/main.ts.
 
 export interface DeviceCodeResponse {
   device_code: string;
@@ -103,82 +99,23 @@ export interface SyncProgress {
   message?: string | null;
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────
-
-export const startDeviceAuth = () =>
-  invoke<DeviceCodeResponse>('start_device_auth');
-
-export const pollDeviceAuth = (device_code: string) =>
-  invoke<PollResult>('poll_device_auth', { deviceCode: device_code });
-
-export const setToken = (token: string) =>
-  invoke<void>('set_token', { token });
-
-export const getToken = () =>
-  invoke<string | null>('get_token');
-
-export const clearToken = () =>
-  invoke<void>('clear_token');
-
-export const revokeToken = () =>
-  invoke<void>('revoke_token');
-
-export const setApiBase = (base: string) =>
-  invoke<void>('set_api_base', { base });
-
-export const getApiBase = () =>
-  invoke<string>('get_api_base');
-
-// ─── Projects ─────────────────────────────────────────────────────────
-
 export interface DesktopMe {
   userId: string;
+  discordId: string | null;
   username: string;
   displayName: string | null;
   avatar: string | null;
   projectCount: number;
   totalStorageBytes: number;
+  storageQuotaBytes: number;
+  storageTier: string;
 }
 
-export const getDesktopMe = () =>
-  invoke<DesktopMe>('get_desktop_me');
-
-export const listRemoteProjects = () =>
-  invoke<RemoteProject[]>('list_remote_projects');
-
-export const createRemoteProject = (name: string, description?: string) =>
-  invoke<RemoteProject>('create_remote_project', { args: { name, description } });
-
-export const getProjectDetail = (projectId: string) =>
-  invoke<RemoteProjectDetail>('get_project_detail', { projectId });
-
-export const listMyTracks = () =>
-  invoke<MyTrack[]>('list_my_tracks');
-
-export const getVersionDiff = (projectId: string, versionId: string) =>
-  invoke<VersionDiff>('get_version_diff', { projectId, versionId });
-
-export const publishVersion = (projectId: string, versionId: string, trackId: string) =>
-  invoke<unknown>('publish_version', { projectId, versionId, trackId });
-
-export const unpublishVersion = (projectId: string, trackId: string) =>
-  invoke<void>('unpublish_version', { projectId, trackId });
-
-// ─── Sync ─────────────────────────────────────────────────────────────
-
-export const scanLocalFolder = (folderPath: string) =>
-  invoke<ScanResult>('scan_local_folder', { folderPath });
-
-export const syncLocalProject = (
-  projectId: string,
-  folderPath: string,
-  message?: string,
-) =>
-  invoke<unknown>('sync_local_project', {
-    args: { projectId, folderPath, message },
-  });
-
-// ─── Updater ──────────────────────────────────────────────────────────
+export interface DesktopStorage {
+  usedBytes: number;
+  quotaBytes: number;
+  tier: string;
+}
 
 export interface UpdateInfo {
   available: boolean;
@@ -186,19 +123,100 @@ export interface UpdateInfo {
   body?: string | null;
 }
 
-export const checkForUpdate = () =>
-  invoke<UpdateInfo>('check_for_update');
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
-export const installUpdate = () =>
-  invoke<void>('install_update');
+export const startDeviceAuth = (): Promise<DeviceCodeResponse> =>
+  window.electronAPI.startDeviceAuth();
 
-// ─── Watcher ──────────────────────────────────────────────────────────
+export const pollDeviceAuth = (device_code: string): Promise<PollResult> =>
+  window.electronAPI.pollDeviceAuth(device_code);
 
-export const watchProjectFolder = (projectId: string, folderPath: string) =>
-  invoke<void>('watch_project_folder', { projectId, folderPath });
+export const setToken = (token: string): Promise<void> =>
+  window.electronAPI.setToken(token);
 
-export const unwatchProjectFolder = (projectId: string) =>
-  invoke<void>('unwatch_project_folder', { projectId });
+export const getToken = (): Promise<string | null> =>
+  window.electronAPI.getToken();
 
-export const listWatchedFolders = () =>
-  invoke<WatchedEntry[]>('list_watched_folders');
+export const clearToken = (): Promise<void> =>
+  window.electronAPI.clearToken();
+
+export const revokeToken = (): Promise<void> =>
+  window.electronAPI.revokeToken();
+
+export const setApiBase = (base: string): Promise<void> =>
+  window.electronAPI.setApiBase(base);
+
+export const getApiBase = (): Promise<string> =>
+  window.electronAPI.getApiBase();
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+export const getDesktopMe = (): Promise<DesktopMe> =>
+  window.electronAPI.getDesktopMe();
+
+export const getDesktopStorage = (): Promise<DesktopStorage> =>
+  window.electronAPI.getDesktopStorage();
+
+export interface Genre {
+  id: string;
+  name: string;
+  parentId: string | null;
+}
+
+export const listGenres = (): Promise<Genre[]> =>
+  window.electronAPI.listGenres();
+
+export const uploadTrack = (payload: Parameters<Window['electronAPI']['uploadTrack']>[0]) =>
+  window.electronAPI.uploadTrack(payload);
+
+export const listRemoteProjects = (): Promise<RemoteProject[]> =>
+  window.electronAPI.listRemoteProjects() as Promise<RemoteProject[]>;
+
+export const createRemoteProject = (name: string, description?: string): Promise<RemoteProject> =>
+  window.electronAPI.createRemoteProject(name, description) as Promise<RemoteProject>;
+
+export const getProjectDetail = (projectId: string): Promise<RemoteProjectDetail> =>
+  window.electronAPI.getProjectDetail(projectId) as Promise<RemoteProjectDetail>;
+
+export const listMyTracks = (): Promise<MyTrack[]> =>
+  window.electronAPI.listMyTracks() as Promise<MyTrack[]>;
+
+export const getVersionDiff = (projectId: string, versionId: string): Promise<VersionDiff> =>
+  window.electronAPI.getVersionDiff(projectId, versionId) as Promise<VersionDiff>;
+
+export const publishVersion = (projectId: string, versionId: string, trackId: string): Promise<unknown> =>
+  window.electronAPI.publishVersion(projectId, versionId, trackId);
+
+export const unpublishVersion = (projectId: string, trackId: string): Promise<void> =>
+  window.electronAPI.unpublishVersion(projectId, trackId);
+
+// ─── Sync ─────────────────────────────────────────────────────────────────────
+
+export const scanLocalFolder = (folderPath: string): Promise<ScanResult> =>
+  window.electronAPI.scanLocalFolder(folderPath);
+
+export const syncLocalProject = (
+  projectId: string,
+  folderPath: string,
+  message?: string,
+): Promise<unknown> =>
+  window.electronAPI.syncLocalProject(projectId, folderPath, message);
+
+// ─── Updater ──────────────────────────────────────────────────────────────────
+
+export const checkForUpdate = (): Promise<UpdateInfo> =>
+  window.electronAPI.checkForUpdate();
+
+export const installUpdate = (): Promise<void> =>
+  window.electronAPI.installUpdate();
+
+// ─── Watcher ──────────────────────────────────────────────────────────────────
+
+export const watchProjectFolder = (projectId: string, folderPath: string): Promise<void> =>
+  window.electronAPI.watchProjectFolder(projectId, folderPath);
+
+export const unwatchProjectFolder = (projectId: string): Promise<void> =>
+  window.electronAPI.unwatchProjectFolder(projectId);
+
+export const listWatchedFolders = (): Promise<WatchedEntry[]> =>
+  window.electronAPI.listWatchedFolders();

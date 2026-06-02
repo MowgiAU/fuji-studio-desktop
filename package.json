@@ -2,35 +2,57 @@
   "name": "fuji-studio-desktop",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "description": "Fuji Studio Desktop — FL Studio project syncing app for fujistud.io",
+  "main": "out/main/index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
-    "type-check": "tsc --noEmit"
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "dist": "npm run build && electron-builder",
+    "type-check": "tsc --noEmit && tsc -p electron/tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0",
-    "@tauri-apps/plugin-dialog": "^2.0.0",
-    "@tauri-apps/plugin-fs": "^2.0.0",
-    "@tauri-apps/plugin-http": "^2.0.0",
-    "@tauri-apps/plugin-notification": "^2.0.0",
-    "@tauri-apps/plugin-shell": "^2.0.0",
-    "@tauri-apps/plugin-store": "^2.0.0",
+    "chokidar": "^3.6.0",
+    "electron-updater": "^6.3.0",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0",
+    "@types/node": "^20.17.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "electron": "^31.0.0",
+    "electron-builder": "^25.1.0",
+    "electron-vite": "^2.3.0",
     "typescript": "^5.6.3",
     "vite": "^5.4.10"
+  },
+  "build": {
+    "appId": "io.fujistud.desktop",
+    "productName": "Fuji Studio",
+    "copyright": "Fuji Studio",
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": ".",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": ["nsis", "msi"],
+      "icon": "resources/icon.ico"
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://fujistud.io/api/desktop/update"
+    }
   }
 }

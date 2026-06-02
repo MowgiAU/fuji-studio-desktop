@@ -77,8 +77,7 @@ export const Dashboard: React.FC<Props> = ({ projectNameMap }) => {
   );
 
   const storageBytes = me?.totalStorageBytes ?? 0;
-  // Placeholder: 5 GB free plan limit
-  const FREE_LIMIT = 5 * 1024 * 1024 * 1024;
+  const FREE_LIMIT = me?.storageQuotaBytes ?? 1073741824;
   const usedPct = Math.min(100, Math.round((storageBytes / FREE_LIMIT) * 100));
 
   const upKBps = throughputSamples[throughputSamples.length - 1] / 1024;
@@ -118,7 +117,7 @@ export const Dashboard: React.FC<Props> = ({ projectNameMap }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: spacing.lg }}>
             <span style={{ color: colors.textPrimary }}>
               <strong style={{ fontSize: 20 }}>{fmtBytes(storageBytes)}</strong>
-              <span style={{ color: colors.textSecondary, fontSize: 13 }}> of 5 GB used</span>
+              <span style={{ color: colors.textSecondary, fontSize: 13 }}> of {fmtBytes(FREE_LIMIT)} used</span>
             </span>
             <span style={{ color: colors.textTertiary, fontSize: 12 }}>{fmtBytes(FREE_LIMIT - storageBytes)} remaining</span>
           </div>

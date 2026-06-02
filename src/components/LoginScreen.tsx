@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { open } from '@tauri-apps/plugin-shell';
 import { borderRadius, colors, shadows, spacing } from '../theme/theme';
 import * as api from '../services/api';
 import { Copy, ExternalLink, RefreshCw } from 'lucide-react';
@@ -59,12 +58,8 @@ export const LoginScreen: React.FC<Props> = ({ onAuthenticated }) => {
     };
   }, []);
 
-  const openUrl = async (url: string) => {
-    try {
-      await open(url);
-    } catch (e) {
-      console.error(e);
-    }
+  const openUrl = (url: string) => {
+    window.electronAPI.openExternal(url).catch(console.error);
   };
 
   return (

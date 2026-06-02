@@ -1,102 +1,107 @@
 import React, { useEffect, useState } from 'react';
 import { borderRadius, colors, spacing } from '../theme/theme';
-import * as api from '../services/api';
-import { Persist } from '../services/store';
-import { Save, Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon } from 'lucide-react';
+import type { AppSettings } from '../electron-env';
 
 export const SettingsView: React.FC = () => {
-  const [apiBase, setApiBase] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>({
+    minimizeToTray: true,
+    desktopNotifications: true,
+    launchAtStartup: false,
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getApiBase().then(setApiBase).catch(() => {});
+    window.electronAPI.getSettings().then(setSettings).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const save = async () => {
-    setSaving(true);
+  const toggle = async (key: keyof AppSettings) => {
+    const next = { ...settings, [key]: !settings[key] };
+    setSettings(next);
     try {
-      const trimmed = apiBase.trim().replace(/\/$/, '');
-      await api.setApiBase(trimmed);
-      await Persist.setApiBase(trimmed);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      await window.electronAPI.setSetting(key, next[key]);
     } catch (e) {
-      console.error(e);
-    } finally {
-      setSaving(false);
+      console.error('Failed to save setting', e);
+      setSettings(settings);
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{ padding: spacing.xxl, color: colors.textTertiary }}>Loading…</div>
+    );
+  }
+
   return (
     <div style={{ padding: spacing.xxl, maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, marginBottom: spacing.xxl }}>
-        <SettingsIcon size={22} color={colors.primary} style={{ verticalAlign: 'middle', marginRight: 10 }} />
-        Settings
-      </h1>
-
-      <div
-        style={{
-          background: colors.surface,
-          border: `1px solid ${colors.glassBorder}`,
-          borderRadius: borderRadius.lg,
-          padding: spacing.xl,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            color: colors.textSecondary,
-            marginBottom: 8,
-          }}
-        >
-          API Endpoint
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: spacing.xxl }}>
+        <SettingsIcon size={32} color={colors.primary} style={{ marginRight: 16 }} />
+        <div>
+          <h1 style={{ margin: 0 }}>Settings</h1>
+          <p style={{ margin: '4px 0 0', color: colors.textSecondary }}>Manage your Fuji Studio desktop preferences</p>
         </div>
-        <p style={{ margin: '0 0 12px', fontSize: 12, color: colors.textTertiary }}>
-          Change this to point at a self-hosted or staging Fuji Studio instance. Default is
-          https://fujistud.io.
-        </p>
-        <input
-          value={apiBase}
-          onChange={e => setApiBase(e.target.value)}
-          placeholder="https://fujistud.io"
-          style={{
-            width: '100%',
-            boxSizing: 'border-box',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: borderRadius.sm,
-            padding: '8px 10px',
-            color: colors.textPrimary,
-            fontSize: 13,
-            outline: 'none',
-            fontFamily: "'Menlo', monospace",
-          }}
+      </div>
+
+      <div style={{
+        background: colors.surface,
+        border: `1px solid ${colors.glassBorder}`,
+        borderRadius: borderRadius.lg,
+        overflow: 'hidden',
+      }}>
+        <SettingRow
+          label="Launch at startup"
+          description="Automatically start Fuji Studio when you log in to your computer."
+          checked={settings.launchAtStartup}
+          onChange={() => toggle('launchAtStartup')}
         />
-        <button
-          onClick={save}
-          disabled={saving}
-          style={{
-            marginTop: 12,
-            background: colors.primary,
-            color: '#fff',
-            border: 'none',
-            padding: '8px 14px',
-            borderRadius: borderRadius.md,
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <Save size={14} /> {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
-        </button>
+        <div style={{ height: 1, background: colors.border }} />
+        <SettingRow
+          label="Minimize to tray on close"
+          description="Keep Fuji Studio running in the background when you close the window so syncing continues."
+          checked={settings.minimizeToTray}
+          onChange={() => toggle('minimizeToTray')}
+        />
+        <div style={{ height: 1, background: colors.border }} />
+        <SettingRow
+          label="Desktop notifications"
+          description="Show system notifications for messages, sync completions, and other activity."
+          checked={settings.desktopNotifications}
+          onChange={() => toggle('desktopNotifications')}
+        />
       </div>
     </div>
   );
 };
+
+const SettingRow: React.FC<{
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: () => void;
+}> = ({ label, description, checked, onChange }) => (
+  <div style={{
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: `${spacing.lg} ${spacing.xl}`, gap: 24,
+  }}>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ fontWeight: 600, fontSize: 14, color: colors.textPrimary }}>{label}</div>
+      <div style={{ fontSize: 12, color: colors.textSecondary, marginTop: 3 }}>{description}</div>
+    </div>
+    <button
+      onClick={onChange}
+      style={{
+        width: 44, height: 24, borderRadius: 12, flexShrink: 0,
+        background: checked ? colors.primary : 'rgba(255,255,255,0.1)',
+        border: 'none', cursor: 'pointer', padding: 0,
+        position: 'relative', transition: 'background 0.2s',
+      }}
+    >
+      <span style={{
+        position: 'absolute', top: 3, left: checked ? 23 : 3,
+        width: 18, height: 18, borderRadius: '50%',
+        background: '#fff',
+        transition: 'left 0.2s',
+      }} />
+    </button>
+  </div>
+);

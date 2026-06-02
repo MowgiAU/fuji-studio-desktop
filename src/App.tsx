@@ -13,6 +13,8 @@ export const App: React.FC = () => {
     | { name: 'list' }
     | { name: 'detail'; projectId: string }
     | { name: 'sync-progress' }
+    | { name: 'messages' }
+    | { name: 'my-tracks' }
     | { name: 'settings' }
   >({ name: 'dashboard' });
   const [update, setUpdate] = useState<api.UpdateInfo | null>(null);

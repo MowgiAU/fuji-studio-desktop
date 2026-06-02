@@ -1,9 +1,4 @@
-// Persistent settings via tauri-plugin-store.
-// Keeps the auth token and watched-folder mapping across app launches.
-
-import { LazyStore } from '@tauri-apps/plugin-store';
-
-const store = new LazyStore('fuji-studio.json');
+// Persistent settings via the Electron main process store (JSON file in userData).
 
 export interface PersistedWatch {
   projectId: string;
@@ -13,41 +8,38 @@ export interface PersistedWatch {
 
 export const Persist = {
   async getToken(): Promise<string | null> {
-    return (await store.get<string>('token')) ?? null;
+    return (await window.electronAPI.store.get('token')) as string | null;
   },
   async setToken(token: string | null): Promise<void> {
     if (token) {
-      await store.set('token', token);
+      await window.electronAPI.store.set('token', token);
     } else {
-      await store.delete('token');
+      await window.electronAPI.store.delete('token');
     }
-    await store.save();
   },
 
   async getApiBase(): Promise<string | null> {
-    return (await store.get<string>('api_base')) ?? null;
+    return (await window.electronAPI.store.get('api_base')) as string | null;
   },
   async setApiBase(base: string): Promise<void> {
-    await store.set('api_base', base);
-    await store.save();
+    await window.electronAPI.store.set('api_base', base);
   },
 
   async getWatches(): Promise<PersistedWatch[]> {
-    return (await store.get<PersistedWatch[]>('watches')) ?? [];
+    return ((await window.electronAPI.store.get('watches')) as PersistedWatch[] | null) ?? [];
   },
   async setWatches(watches: PersistedWatch[]): Promise<void> {
-    await store.set('watches', watches);
-    await store.save();
+    await window.electronAPI.store.set('watches', watches);
   },
   async upsertWatch(watch: PersistedWatch): Promise<void> {
     const all = await this.getWatches();
-    const idx = all.findIndex(w => w.projectId === watch.projectId);
+    const idx = all.findIndex((w) => w.projectId === watch.projectId);
     if (idx >= 0) all[idx] = watch;
     else all.push(watch);
     await this.setWatches(all);
   },
   async removeWatch(projectId: string): Promise<void> {
     const all = await this.getWatches();
-    await this.setWatches(all.filter(w => w.projectId !== projectId));
+    await this.setWatches(all.filter((w) => w.projectId !== projectId));
   },
 };
